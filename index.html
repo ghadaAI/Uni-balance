@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Campus Balance</title>
+<meta name="description" content="Campus Balance: an AI-assisted weekly planner prototype that helps students balance study, daily routines and campus life.">
+<meta name="theme-color" content="#2c7176">
+<meta property="og:title" content="Campus Balance"><meta property="og:description" content="Plan study, rest and campus life in one editable week. CPIT221 project prototype.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><text y=%27.9em%27 font-size=%2790%27>🗓️</text></svg>">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{bg:'var(--bg)',surf:'var(--surf)',ink:'var(--ink)',mut:'var(--mut)',line:'var(--line)',teal:'var(--teal)',sage:'var(--sage)',sand:'var(--sand)',sandt:'var(--sandt)'},fontFamily:{serif:['Georgia','Times New Roman','serif']}}}}
+</script>
+<style>
+:root{--bg:#f6f8f7;--surf:#ffffff;--ink:#1f2a3b;--mut:#5b6678;--line:#d9e0e0;--teal:#2c7176;--sage:#d3e4dd;--sand:#f3dfc9;--sandt:#6b4a2b;--slate:#5a6985;color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141b27;--surf:#1f2a3b;--ink:#eef2f1;--mut:#a9b3c2;--line:#33415a;--sage:#2f4a49;--sand:#4a3a2b;--sandt:#f0d3b4}}
+:root[data-theme="dark"]{--bg:#141b27;--surf:#1f2a3b;--ink:#eef2f1;--mut:#a9b3c2;--line:#33415a;--sage:#2f4a49;--sand:#4a3a2b;--sandt:#f0d3b4}
+html{scroll-padding-top:calc(76px + env(safe-area-inset-top,0px))}
+body{background:var(--bg);color:var(--ink);font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surf);z-index:60}
+*:focus-visible{outline:3px solid #c98a5c;outline-offset:2px}
+.col{position:relative;height:480px;border-left:1px solid var(--line);background:repeating-linear-gradient(var(--surf) 0 39px,var(--line) 39px 40px)}
+.blk{position:absolute;left:3px;right:3px;border-radius:7px;padding:3px 6px;overflow:hidden;font-weight:600;font-size:.72rem;color:#fff;text-align:left}
+.t-class{background:var(--slate)}.t-study{background:var(--teal);cursor:pointer}.t-routine{background:var(--sage);color:var(--ink)}.t-activity{background:var(--sand);color:var(--sandt)}
+.t-pend{border:2px dashed var(--teal);color:var(--teal);background:transparent}
+.done{opacity:.55;text-decoration:line-through}
+.chip[aria-pressed=true]{background:var(--teal);color:#fff;border-color:var(--teal)}
+.chip{border:1px solid var(--line);border-radius:999px;padding:10px 16px;min-height:44px;font-size:.9rem;background:var(--surf)}
+.btn{background:var(--teal);color:#fff;border-radius:10px;padding:10px 18px;font-weight:600}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-o{border:1px solid var(--teal);color:var(--teal);border-radius:10px;padding:10px 18px;font-weight:600}
+.fld{font-size:16px;min-height:44px;width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:9px 10px}
+.step[data-s=done] .dot{background:var(--teal);color:#fff}
+.step[data-s=on] .dot{background:var(--ink);color:var(--bg)}
+.step .dot{background:var(--line);color:var(--mut)}
+.sw{appearance:none;width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;cursor:pointer;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.sw:checked{background:var(--teal)}.sw:checked::after{left:21px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));display:none;z-index:70}
+</style>
+</head>
+<body>
+<header class="sticky z-50 bg-surf border-b border-line" style="top:env(safe-area-inset-top,0px)">
+<div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+<a href="#top" class="font-serif text-xl font-semibold">Campus Balance</a>
+<nav class="hidden md:flex gap-6 text-sm" aria-label="Main">
+<a href="#schedule" class="hover:text-teal">Schedule</a><a href="#planner" class="hover:text-teal">AI planner</a><a href="#wellbeing" class="hover:text-teal">Well-being</a><a href="#campus" class="hover:text-teal">Campus</a><a href="#privacy" class="hover:text-teal">Privacy</a>
+</nav>
+<button id="mb" class="md:hidden chip" aria-expanded="false" aria-controls="mm">Menu</button>
+</div>
+<div id="mm" class="hidden md:hidden border-t border-line px-4 py-3 flex flex-col gap-3 text-sm">
+<a href="#schedule">Schedule</a><a href="#planner">AI planner</a><a href="#wellbeing">Well-being</a><a href="#campus">Campus</a><a href="#privacy">Privacy</a>
+</div>
+</header>
+
+<main id="top">
+<section class="max-w-6xl mx-auto px-4 pt-14 pb-10 grid md:grid-cols-2 gap-8 items-center">
+<div>
+<h1 class="font-serif text-4xl md:text-6xl font-semibold leading-tight tracking-tight">One week for study, rest and campus life.</h1>
+<p class="mt-4 text-mut max-w-md">Campus Balance suggests a weekly plan. You review it, change it and approve it. Nothing is saved without you.</p>
+<div class="mt-6 flex flex-wrap gap-3"><a href="#planner" class="btn">Try the planner</a><a href="#schedule" class="btn-o">See my week</a></div>
+<p class="mt-4 text-sm text-mut">Prototype for a university project. Benefits are expected and will be tested in a small supervised pilot.</p>
+</div>
+<div class="bg-surf border border-line rounded-2xl p-5">
+<p class="font-semibold mb-3">Today’s plan</p>
+<ul class="space-y-2 text-sm">
+<li class="flex justify-between rounded-lg px-3 py-2" style="background:var(--slate);color:#fff"><span>Lecture</span><span>08:00–10:00</span></li>
+<li class="flex justify-between rounded-lg px-3 py-2 bg-sage"><span>Lunch</span><span>12:00–13:00</span></li>
+<li class="flex justify-between rounded-lg px-3 py-2" style="background:var(--teal);color:#fff"><span>Study: CPIT221</span><span>16:00–18:00</span></li>
+<li class="flex justify-between rounded-lg px-3 py-2 bg-sand text-sandt"><span>Club meeting</span><span>18:00–19:00</span></li>
+</ul>
+</div>
+</section>
+
+<section id="schedule" class="max-w-6xl mx-auto px-4 py-10">
+<h2 class="font-serif text-3xl font-semibold">Weekly schedule</h2>
+<p class="text-mut mt-1 mb-4">Show or hide layers. Tap a study block to mark it done.</p>
+<div class="bg-surf border border-line rounded-2xl p-4 mb-4"><h3 class="font-semibold mb-3">Add to your week</h3><div class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end"><div class="col-span-2"><label class="text-sm text-mut" for="an">Name</label><input id="an" class="fld" placeholder="e.g. CPIT221 lecture"></div><div><label class="text-sm text-mut" for="at">Type</label><select id="at" class="fld"><option value="class">Class</option><option value="routine">Routine</option><option value="study">Study</option><option value="activity">Activity</option></select></div><div><label class="text-sm text-mut" for="ad">Day</label><select id="ad" class="fld"></select></div><div><label class="text-sm text-mut" for="as">Start</label><select id="as" class="fld"></select></div><div><label class="text-sm text-mut" for="ae">End</label><select id="ae" class="fld"></select></div></div><div class="flex flex-wrap gap-3 mt-4"><button id="addb" class="btn">Add to schedule</button><button id="rst" class="btn-o">Load sample week</button><button id="clr" class="btn-o">Clear everything</button></div><p class="text-xs text-mut mt-2">Your schedule is saved in this browser only. Tap × on any block to remove it.</p></div>
+<div id="layers" class="flex flex-wrap gap-2 mb-4"></div>
+<div id="dtabs" class="flex gap-2 mb-3 sm:hidden"></div>
+<div class="bg-surf border border-line rounded-2xl p-4 overflow-x-auto">
+<div id="cal" class="grid text-xs" style="min-width:580px;grid-template-columns:44px repeat(5,1fr)"></div>
+<div class="flex flex-wrap gap-4 text-xs text-mut mt-3"><span>Dashed = suggested, not saved yet</span><span id="sum"></span></div>
+</div>
+</section>
+
+<section id="planner" class="max-w-6xl mx-auto px-4 py-10">
+<h2 class="font-serif text-3xl font-semibold">AI study planner</h2>
+<p class="text-mut mt-1 mb-6">The planner only suggests. Every session is checked for conflicts before you can approve it.</p>
+<ol id="steps" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></ol>
+<div class="grid md:grid-cols-2 gap-5">
+<div class="bg-surf border border-line rounded-2xl p-5">
+<h3 class="font-semibold mb-3">1. Enter commitments</h3>
+<label class="text-sm text-mut" for="tn">Task</label><input id="tn" class="fld mb-3" value="CPIT221 report">
+<div class="grid grid-cols-2 gap-3">
+<div><label class="text-sm text-mut" for="th">Hours needed</label><input id="th" type="number" min="1" max="12" value="6" class="fld"></div>
+<div><label class="text-sm text-mut" for="td">Due day</label><select id="td" class="fld"></select></div>
+</div>
+<div class="flex flex-wrap gap-3 mt-4"><button id="gen" class="btn">Generate suggestions</button><button id="clash" class="btn-o">Simulate a lab clash</button></div>
+<p class="text-xs text-mut mt-3">Demo logic: the suggestions here come from a free-slot rule. The full version would call an AI service.</p>
+</div>
+<div class="bg-surf border border-line rounded-2xl p-5">
+<h3 class="font-semibold mb-3">3. Review and adjust</h3>
+<div id="sugs"><p class="text-mut text-sm">No suggestions yet. Generate a plan to review it here.</p></div>
+<button id="appr" class="btn mt-4 hidden">4. Approve plan</button>
+</div>
+</div>
+</section>
+
+<section id="wellbeing" class="max-w-6xl mx-auto px-4 py-10">
+<h2 class="font-serif text-3xl font-semibold">Well-being and daily habits</h2>
+<p class="text-mut mt-1 mb-6">All reminders are optional and can be turned off. General information only, with no diagnosis or medical treatment.</p>
+<div class="grid md:grid-cols-2 gap-5">
+<div class="bg-surf border border-line rounded-2xl p-5 divide-y divide-line">
+<div class="flex justify-between gap-4 py-3"><div><b>Sleep wind-down</b><p class="text-sm text-mut">Adults 18–60 need 7+ hours (CDC, 2024)</p></div><input type="checkbox" class="sw" id="r1" checked aria-label="Sleep wind-down"></div>
+<div class="flex justify-between gap-4 py-3"><div><b>Movement breaks</b><p class="text-sm text-mut">Short active breaks between study blocks (WHO, 2024)</p></div><input type="checkbox" class="sw" id="r2" checked aria-label="Movement breaks"></div>
+<div class="flex justify-between gap-4 py-3"><div><b>Protected meals</b><p class="text-sm text-mut">Busy days do not push meals aside (WHO, 2020)</p></div><input type="checkbox" class="sw" id="r3" checked aria-label="Protected meals"></div>
+<div class="flex justify-between gap-4 py-3"><div><b>Prayers and Adhkar</b><p class="text-sm text-mut">Stay connected with your prayers and daily adhkar</p></div><input type="checkbox" class="sw" id="r4" aria-label="Prayers and Adhkar"></div>
+<div class="py-3 flex items-center gap-3"><label for="bt" class="text-sm text-mut">Bedtime you choose</label><input id="bt" type="time" value="22:00" class="fld" style="max-width:140px"></div>
+</div>
+<div class="flex flex-col items-center">
+<div class="rounded-[2rem] p-3 w-64" style="background:#1f2a3b">
+<div class="rounded-[1.5rem] bg-surf p-4 min-h-[260px]">
+<p class="text-center text-3xl font-serif font-semibold" id="clk">21:30</p>
+<div id="notif" class="mt-4 border border-line rounded-xl p-3 text-sm"><p class="text-xs text-mut">Campus Balance · now</p><b id="nt">Wind-down time</b><p id="nb" class="text-mut">Your plan starts at 08:00 tomorrow.</p></div>
+<div class="mt-3 bg-sage rounded-xl p-3 text-sm"><p class="text-xs text-mut">Earlier today</p><b>Movement break · 5-minute walk</b></div>
+</div></div>
+<button id="prev" class="btn-o mt-4">Preview next reminder</button>
+</div>
+</div>
+</section>
+
+<section id="campus" class="max-w-6xl mx-auto px-4 py-10">
+<h2 class="font-serif text-3xl font-semibold">Campus activities and clubs</h2>
+<p class="text-mut mt-1 mb-4">Browse verified listings. Adding one checks it against your classes, meals and study sessions first.</p>
+<div id="cf" class="flex flex-wrap gap-2 mb-4"></div>
+<div id="evs" class="grid sm:grid-cols-2 gap-4"></div>
+<div class="mt-5 bg-sand text-sandt rounded-xl p-4 text-sm"><b>Optional personal challenge:</b> “Attend one new club meeting this week.” Chosen by you. Progress is private. No rankings or public scores. <span id="chal" class="font-semibold">0 of 1 done.</span> Example listings are illustrative.</div>
+</section>
+
+<section id="privacy" class="max-w-6xl mx-auto px-4 py-10">
+<h2 class="font-serif text-3xl font-semibold">Privacy and ethics</h2>
+<p class="text-mut mt-1 mb-6">The design will be reviewed against university data and ethics policies before any pilot.</p>
+<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+<div class="bg-surf border border-line rounded-2xl p-5"><b>Minimal data</b><p class="text-sm text-mut mt-1">Only courses, deadlines and chosen goals.</p></div>
+<div class="bg-surf border border-line rounded-2xl p-5"><b>Informed consent</b><p class="text-sm text-mut mt-1">Plain-language consent; each feature is opt-in.</p></div>
+<div class="bg-surf border border-line rounded-2xl p-5"><b>Student control</b><p class="text-sm text-mut mt-1">View, export, edit or delete your data at any time.</p></div>
+<div class="bg-surf border border-line rounded-2xl p-5"><b>Human oversight</b><p class="text-sm text-mut mt-1">AI suggestions are never automatic decisions. You have the final say.</p></div>
+<div class="bg-surf border border-line rounded-2xl p-5"><b>Non-medical well-being</b><p class="text-sm text-mut mt-1">General habit reminders only, with links to official university support.</p></div>
+<div class="bg-surf border border-line rounded-2xl p-5"><b>Secure, never sold</b><p class="text-sm text-mut mt-1">Encrypted storage. Data is never sold, shared or used for grading.</p></div>
+</div>
+</section>
+</main>
+
+<footer class="border-t border-line bg-surf mt-10">
+<div class="max-w-6xl mx-auto px-4 py-8 text-sm text-mut">
+<p><b class="text-ink">Campus Balance</b> · CPIT221 Technical Writing group project</p>
+<p>Faculty of Computing and Information Technology, King Abdulaziz University</p>
+<p class="mt-2">Your plan is saved only in your own browser. Nothing is sent to any server.</p>
+</div>
+</footer>
+<div id="toast" class="bg-ink text-bg rounded-xl px-4 py-3 text-sm shadow-lg max-w-[90vw]" role="status"></div>
+
+<script>
+const D=["Sun","Mon","Tue","Wed","Thu"],H0=8,H1=20,$=s=>document.querySelector(s),tm=h=>String(h).padStart(2,"0")+":00";
+const mob=()=>matchMedia("(max-width:640px)").matches;const DS=()=>mob()?[md]:[0,1,2,3,4];let md=0,id=0,pend=[],step=1,vis={class:1,study:1,routine:1,activity:1},cat="All";
+let B=[{day:0,s:8,e:10,t:"class",n:"Lecture"},{day:1,s:10,e:12,t:"class",n:"Lecture"},{day:2,s:13,e:15,t:"class",n:"Lab session"},{day:3,s:8,e:10,t:"class",n:"Lecture"},{day:4,s:9,e:11,t:"class",n:"Lecture"}];
+D.forEach((_,d)=>B.push({day:d,s:12,e:13,t:"routine",n:"Lunch"}));
+B.forEach(b=>{b.id=++id});const SAMPLE=JSON.stringify(B);
+try{const s=JSON.parse(localStorage.getItem("cb1"));if(s&&Array.isArray(s.B)){B=s.B;id=s.id||id}}catch(e){}
+function save(){try{localStorage.setItem("cb1",JSON.stringify({B,id}))}catch(e){}}
+const EV=[
+{n:"Coding Club meeting",c:"Clubs",day:1,s:18,e:19,by:"Student club"},
+{n:"Book Club",c:"Clubs",day:3,s:17,e:18,by:"Student club"},
+{n:"Career talk",c:"Events",day:4,s:14,e:15,by:"Student Affairs"},
+{n:"Volunteering fair",c:"Events",day:2,s:13,e:14,by:"Student Affairs"},
+{n:"CV writing workshop",c:"Workshops",day:0,s:14,e:15,by:"Student Affairs"},
+{n:"Time management workshop",c:"Workshops",day:3,s:15,e:16,by:"Academic advisers"}
+];
+const conf=(d,s,e,skip)=>B.concat(pend.filter(p=>p!==skip)).find(b=>b.day===d&&s<b.e&&e>b.s);
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.k);toast.k=setTimeout(()=>t.style.display="none",3200)}
+function draw(){
+ const L={class:"Classes",study:"Study",routine:"Routines",activity:"Activities"};
+ $("#layers").innerHTML=Object.keys(L).map(k=>'<button class="chip" aria-pressed="'+!!vis[k]+'" data-l="'+k+'">'+L[k]+'</button>').join("");
+ let h='<div></div>'+DS().map(d=>'<div class="text-center font-semibold pb-2">'+D[d]+'</div>').join("")+'<div>'+Array.from({length:H1-H0},(_,i)=>'<div class="h-10 text-mut">'+tm(H0+i)+'</div>').join("")+'</div>';
+ DS().forEach(d=>{
+  h+='<div class="col">';
+  B.filter(b=>b.day===d&&vis[b.t]).forEach(b=>{
+   h+='<button class="blk t-'+b.t+(b.done?' done':'')+'" style="top:'+(b.s-H0)*40+'px;height:'+((b.e-b.s)*40-2)+'px" data-id="'+b.id+'">'+b.n+' <span data-x="'+b.id+'" aria-label="Remove" style="float:right;cursor:pointer">×</span>'+'</button>';
+  });
+  pend.filter(p=>p.day===d).forEach(p=>{h+='<div class="blk t-pend" style="top:'+(p.s-H0)*40+'px;height:'+((p.e-p.s)*40-2)+'px">'+p.n+'</div>'});
+  h+='</div>';
+ });
+ $("#cal").innerHTML=h;$("#cal").style.gridTemplateColumns="44px repeat("+DS().length+",1fr)";$("#cal").style.minWidth=mob()?"0":"580px";
+ $("#dtabs").innerHTML=D.map((d,i)=>'<button class="chip flex-1" aria-pressed="'+(i===md)+'" data-d="'+i+'">'+d+'</button>').join("");
+ const st=B.filter(b=>b.t==="study");
+ $("#sum").textContent=st.length?st.filter(b=>b.done).length+" of "+st.length+" study sessions done":"No study sessions yet";
+ save();drawSteps();drawSug();drawEv();
+}
+$("#layers").onclick=e=>{const l=e.target.dataset.l;if(l){vis[l]=!vis[l];draw()}};
+$("#cal").onclick=e=>{
+ const x=e.target.closest("[data-x]");
+ if(x){B=B.filter(b=>b.id!=x.dataset.x);draw();return}
+ const b=e.target.closest("[data-id]");if(!b)return;
+ const o=B.find(k=>k.id==b.dataset.id);if(o&&o.t==="study"){o.done=!o.done;draw()}
+};
+function drawSteps(){
+ const N=["Enter commitments","Generate suggestions","Review the plan","Adjust and approve"];
+ $("#steps").innerHTML=N.map((n,i)=>{
+  const s=i+1<step?"done":i+1===step?"on":"";
+  return '<li class="step bg-surf border border-line rounded-xl p-3 flex items-center gap-3" data-s="'+s+'"><span class="dot w-7 h-7 rounded-full grid place-items-center text-sm font-bold flex-none">'+(s==="done"?"✓":i+1)+'</span><span class="text-sm font-semibold">'+n+'</span></li>';
+ }).join("");
+}
+function drawSug(){
+ const el=$("#sugs"),a=$("#appr");
+ if(!pend.length){if(step<5)el.innerHTML='<p class="text-mut text-sm">No suggestions yet. Generate a plan to review it here.</p>';a.classList.add("hidden");return}
+ let bad=false;
+ el.innerHTML=pend.map((p,i)=>{
+  const c=conf(p.day,p.s,p.e,p),len=p.e-p.s;if(c)bad=true;
+  return '<div class="py-3 border-t border-line first:border-0"><div class="flex flex-wrap gap-2 items-center"><b class="text-sm">Session '+(i+1)+'</b>'+
+  '<select class="fld" style="width:auto" data-i="'+i+'" data-k="day" aria-label="Day">'+D.map((d,j)=>'<option value="'+j+'"'+(j===p.day?' selected':'')+'>'+d+'</option>').join("")+'</select>'+
+  '<select class="fld" style="width:auto" data-i="'+i+'" data-k="s" aria-label="Start time">'+Array.from({length:H1-H0-len+1},(_,j)=>H0+j).map(h=>'<option value="'+h+'"'+(h===p.s?' selected':'')+'>'+tm(h)+'–'+tm(h+len)+'</option>').join("")+'</select></div>'+
+  (c?'<p class="mt-1 text-sm font-semibold" style="color:#b3532a">⚠ Overlaps with '+c.n+' ('+D[c.day]+' '+tm(c.s)+'). Choose another time?</p>':'<p class="mt-1 text-sm font-semibold text-teal">✓ No conflict</p>')+'</div>';
+ }).join("");
+ a.classList.remove("hidden");a.disabled=bad;
+}
+$("#sugs").onchange=e=>{const i=e.target.dataset.i;if(i==null)return;const p=pend[i],len=p.e-p.s;p[e.target.dataset.k]=+e.target.value;p.e=p.s+len;draw()};
+$("#gen").onclick=()=>{
+ pend=[];let hrs=Math.max(1,Math.min(12,+$("#th").value||1)),due=+$("#td").value,name=$("#tn").value.trim()||"Study";
+ const pref=[16,18,14,10,8,15,17,19];
+ while(hrs>0&&pend.length<8){
+  const len=Math.min(2,hrs);let got=null,best=99;
+  for(let d=0;d<=due;d++){const used=pend.filter(p=>p.day===d).length;
+   for(const s of pref){if(s+len<=H1&&!conf(d,s,s+len)){if(used<best){best=used;got={day:d,s,e:s+len,n:"Study: "+name,t:"study"}}break}}}
+  if(!got){toast("Not enough free time before the due day. Choose a later day or fewer hours.");break}
+  pend.push(got);hrs-=len;
+ }
+ step=pend.length?3:1;draw();
+ if(pend.length)$("#sugs").scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+$("#clash").onclick=()=>{
+ const name=$("#tn").value.trim()||"Study";
+ pend=[{day:2,s:13,e:15,n:"Study: "+name,t:"study"},{day:0,s:16,e:18,n:"Study: "+name,t:"study"}];
+ step=3;draw();toast("Session 1 now overlaps with the Tuesday lab. Move it to continue.");
+};
+$("#appr").onclick=()=>{pend.forEach(p=>{p.id=++id;B.push(p)});toast(pend.length+" sessions saved to your plan");pend=[];step=5;draw();
+ $("#sugs").innerHTML='<p class="text-teal font-semibold text-sm">✓ Plan approved. Your sessions are now in the schedule above.</p>'};
+function drawEv(){
+ $("#cf").innerHTML=["All","Clubs","Events","Workshops"].map(c=>'<button class="chip" aria-pressed="'+(c===cat)+'" data-c="'+c+'">'+c+'</button>').join("");
+ $("#evs").innerHTML=EV.filter(v=>cat==="All"||v.c===cat).map(v=>{
+  const added=B.some(b=>b.t==="activity"&&b.n===v.n),c=!added&&conf(v.day,v.s,v.e);
+  return '<div class="bg-surf border border-line rounded-2xl p-4 flex justify-between gap-3 items-center"><div><b>'+v.n+'</b><p class="text-sm text-mut">'+D[v.day]+' '+tm(v.s)+'–'+tm(v.e)+' · '+v.by+' · verified</p>'+(c?'<p class="text-sm font-semibold" style="color:#b3532a">Overlaps with '+c.n+'</p>':'')+'</div><button class="'+(added?'btn-o':'btn')+'" style="padding:8px 14px" data-e="'+EV.indexOf(v)+'"'+(added?' disabled':'')+'>'+(added?'Added':'Add')+'</button></div>';
+ }).join("");
+ $("#chal").textContent=(B.some(b=>b.t==="activity"&&EV.find(v=>v.n===b.n&&v.c==="Clubs"))?1:0)+" of 1 done.";
+}
+$("#cf").onclick=e=>{if(e.target.dataset.c){cat=e.target.dataset.c;drawEv()}};
+$("#evs").onclick=e=>{
+ const i=e.target.dataset.e;if(i==null)return;const v=EV[i],c=conf(v.day,v.s,v.e);
+ if(c){toast("Overlaps with "+c.n+". Move or remove it first.");return}
+ B.push({id:++id,day:v.day,s:v.s,e:v.e,t:"activity",n:v.n});toast("Added: "+v.n);draw();
+};
+let ri=0;
+$("#prev").onclick=()=>{
+ const m=[];
+ if($("#r1").checked)m.push(["21:30","Wind-down time","Your plan starts at 08:00 tomorrow."]);
+ if($("#r2").checked)m.push(["15:30","Movement break","Take a 5-minute walk."]);
+ if($("#r3").checked)m.push(["12:00","Lunch time","Your meal time is protected today."]);
+ if($("#r4").checked)m.push(["Now","Prayers and Adhkar","A calm moment for your prayers and daily adhkar."]);
+ if(!m.length){$("#nt").textContent="All reminders are off";$("#nb").textContent="Nothing will be sent.";return}
+ const r=m[ri++%m.length];$("#clk").textContent=r[0];$("#nt").textContent=r[1];$("#nb").textContent=r[2];
+};
+$("#td").innerHTML=D.map((d,i)=>'<option value="'+i+'"'+(i===4?' selected':'')+'>'+d+'</option>').join("");
+$("#ad").innerHTML=D.map((d,i)=>'<option value="'+i+'">'+d+'</option>').join("");
+$("#as").innerHTML=Array.from({length:H1-H0},(_,i)=>'<option value="'+(H0+i)+'">'+tm(H0+i)+'</option>').join("");
+$("#ae").innerHTML=Array.from({length:H1-H0},(_,i)=>'<option value="'+(H0+i+1)+'">'+tm(H0+i+1)+'</option>').join("");
+$("#ae").value=9;
+$("#addb").onclick=()=>{const n=$("#an").value.trim(),t=$("#at").value,d=+$("#ad").value,s=+$("#as").value,e=+$("#ae").value;
+if(!n){toast("Enter a name first.");return}
+if(e<=s){toast("End time must be after start time.");return}
+const c=conf(d,s,e);if(c){toast("Overlaps with "+c.n+" ("+D[c.day]+" "+tm(c.s)+"). Choose another time.");return}
+B.push({id:++id,day:d,s,e,t,n});$("#an").value="";toast("Added: "+n);draw()};
+$("#rst").onclick=()=>{B=JSON.parse(SAMPLE);pend=[];step=1;draw();toast("Sample week loaded")};
+$("#clr").onclick=()=>{if(confirm("Remove everything from your schedule?")){B=[];pend=[];step=1;draw()}};
+$("#dtabs").onclick=e=>{if(e.target.dataset.d!=null){md=+e.target.dataset.d;draw()}};
+let wm=mob();window.addEventListener("resize",()=>{if(mob()!==wm){wm=mob();draw()}});
+$("#mb").onclick=()=>{const m=$("#mm"),o=m.classList.toggle("hidden");$("#mb").setAttribute("aria-expanded",!o)};
+$("#mm").onclick=e=>{if(e.target.tagName==="A"){$("#mm").classList.add("hidden");$("#mb").setAttribute("aria-expanded","false")}};
+draw();
+</script>
+</body>
+</html>
